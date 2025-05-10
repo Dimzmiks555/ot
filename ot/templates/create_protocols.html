@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>МЕНЮ</title>
+    <link rel="stylesheet" href="{% static '/style.css' %}" />
+</head>
+<body>
+    <main id="app">
+        <br>
+        <h1>Формирование протоколов охраны труда</h1>
+        <br>
+        <form method="post" action="/create_protocols">
+            {% csrf_token %}
+            <div>
+                <div>
+                    <label for="date">Дата протоколов</label><br>
+                    <input name="date" type="date" id="date">
+                </div>
+                <br>
+                <div>
+                    <label for="company">Организация</label><br>
+                    <select name="company" id="company">
+                        {% for company in companies %}
+                        <option value="{{company.pk}}">{{company.title}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <br>
+                <div>
+                    <label for="decree">Приказ на комиссию</label><br>
+                    <select name="decree" id="decree">
+                        {% for decree in decrees %}
+                        <option value="{{decree.pk}}">Приказ № {{decree.number}} от {{decree.date}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <br>
+                <div>
+                    {% for program in programs %}
+                    <div>
+                        <input v-model="programs" value="{{program.system_id}}" type="checkbox" id="pr_{{program.system_id}}">
+                        <label >{{program.title}}</label>
+                    </div>
+                    {% endfor %}
+                    <br>
+                    <button>Сформировать</button>
+                </div>
+            </div>
+            <div>
+                <h3>Выбранные</h3>
+                <br>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Фамилия</th>
+                            <th>Имя</th>
+                            <th>Отчество</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="object in selectedObjects">
+                            <td>[[object.fields.firstname]]</td>
+                            <td>[[object.fields.lastname]]</td>
+                            <td>[[object.fields.middlename]]</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <div>
+                    <label for="search">Поиск</label><br>
+                    <input name="search" v-model="search" id="search">
+                </div>
+                <br>
+                <table>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Фамилия</th>
+                            <th>Имя</th>
+                            <th>Отчество</th>
+                            <th>Дата рождения</th>
+                            <th>Должность</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <tr v-for="object in filteredList">
+                                <td><input type="checkbox" :value="object.pk" :id="object.pk" v-model="selected"></td>
+                                <td>[[object.fields.firstname]]</td>
+                                <td>[[object.fields.lastname]]</td>
+                                <td>[[object.fields.middlename]]</td>
+                                <td>[[object.fields.birth]]</td>
+                                <td>[[object.fields.position]]</td>
+                            </tr>
+                    </tbody>
+                </table>
+                <input type="hidden" :value="selected" name="selected">
+                <input type="hidden" :value="programs" name="programs">
+            </div>
+        </form>
+    </main>
+    <script src="https://unpkg.com/vue"></script>
+    <script>
+
+        let data = {{json|safe}}
+
+        console.log(data)
+
+        Vue.createApp({
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                message: 'Hello Vue 3!',
+                employees: data,
+                search: '',
+                selected: [],
+                programs: [],
+                selectedObjects: []
+            }
+        },
+        watch: {
+            selected: function (newSelected) {
+                const vm = this
+                vm.selectedObjects = []
+                newSelected.forEach(pk => {
+                    vm.selectedObjects.push(data.find(m => m.pk == pk))
+                });
+            }   
+        },
+        methods: {
+            setMessage(event) {
+            this.message = event.target.value;
+            },
+            selectRow(event) {
+
+            }
+        },
+        computed:{
+            filteredList: function(){
+                var search = this.search.toLowerCase();
+                return this.employees.filter(function (elem) {
+                    if (search === '') return true;
+                    else if (elem.fields.firstname.toLowerCase().includes(search) || elem.fields.lastname.toLowerCase().includes(search) || elem.fields.middlename.toLowerCase().includes(search)) {
+                        return true
+                    }
+                })
+            }
+        }
+        }).mount('#app');
+    </script>
+</body>
+</html>
